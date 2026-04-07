@@ -24,7 +24,7 @@ cd ~/ros2_ws/src
 git clone -b vision_sign_lane https://github.com/Jacqueline-T/Follow_the_line.git
 ```
 
-# Configurar ruta de ncnn y compilar
+### Configurar ruta de ncnn y compilar
 ```
 export ncnn_DIR=~/ros2_ws/ncnn/build/install/lib/cmake/ncnn
 cd ~/ros2_ws
@@ -32,13 +32,13 @@ colcon build --symlink-install --packages-select lane_detection
 source install/setup.bash
 ```
 
-##4. Permisos de Cámara (este no se muy bien como funcione en la jetson)
+## 4. Permisos de Cámara (este no se muy bien como funcione en la jetson)
 
 ```
 sudo chmod 777 /dev/video0
 ```
 
-# PASO 1: Calibración
+### PASO 1: Calibración
 Ejecuta la calibracion primero. La parte de arriba tiene que estar debajo del horizonte
 y las puntas de los trapecios tocando las esquinas de los carriles (no tiene que ser preciso)
 
@@ -48,7 +48,7 @@ ros2 run lane_detection cal_node
 
 Anota los valores resultantes.
 
-# PASO 2: Detección
+### PASO 2: Detección
 
 Ejecuta el nodo principal e ingresa los datos de calibración en la terminal cuando los pida:
 
@@ -56,7 +56,7 @@ Ejecuta el nodo principal e ingresa los datos de calibración en la terminal cua
 ros2 run lane_detection lane_node
 ```
 
-# PASO 3: Verificar que si se publican los datos. 
+### PASO 3: Verificar que si se publican los datos. 
 Se publicaran los datos de offset (que tan alejado esta del centro del carril) y rumbo en grados. 
 
 ```
