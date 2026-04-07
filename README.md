@@ -1,4 +1,4 @@
-##1. Dependencias
+## 1. Dependencias
 
 ```
 sudo apt update && sudo apt upgrade -y
@@ -6,7 +6,7 @@ sudo apt install -y build-essential cmake git libopencv-dev v4l-utils libeigen3-
 ros-humble-cv-bridge ros-humble-image-transport ros-humble-sensor-msgs ros-humble-geometry-msgs ros-humble-std-msgs ros-humble-rclcpp ros-humble-vision-opencv
 ```
 
-##2. NCNN 
+## 2. NCNN 
 
 ```
 cd ~/ros2_ws
@@ -17,7 +17,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_VULKAN=OFF
 make -j$(nproc) && make install
 ```
 
-##3. Clonar y Compilar el nodo
+## 3. Clonar y Compilar el nodo
 
 ```
 cd ~/ros2_ws/src
@@ -38,7 +38,7 @@ source install/setup.bash
 sudo chmod 777 /dev/video0
 ```
 
-#PASO 1: Calibración
+# PASO 1: Calibración
 Ejecuta la calibracion primero. La parte de arriba tiene que estar debajo del horizonte
 y las puntas de los trapecios tocando las esquinas de los carriles (no tiene que ser preciso)
 
@@ -48,7 +48,7 @@ ros2 run lane_detection cal_node
 
 Anota los valores resultantes.
 
-#PASO 2: Detección
+# PASO 2: Detección
 
 Ejecuta el nodo principal e ingresa los datos de calibración en la terminal cuando los pida:
 
@@ -56,7 +56,7 @@ Ejecuta el nodo principal e ingresa los datos de calibración en la terminal cua
 ros2 run lane_detection lane_node
 ```
 
-#PASO 3: Verificar que si se publican los datos. 
+# PASO 3: Verificar que si se publican los datos. 
 Se publicaran los datos de offset (que tan alejado esta del centro del carril) y rumbo en grados. 
 
 ```
