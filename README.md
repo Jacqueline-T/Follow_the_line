@@ -1,3 +1,8 @@
+# Que falta:
+- Probar el nodo final fused_lane_detection
+- Terminar de programar la detección de cruces peatonales
+- Mejorar la deteccion de autos (falla demasiado, arreglar dataset)
+- Mejorar la deteccion de carriles cuando hay lineas punteadas
 
 # Dependencias
 
@@ -18,7 +23,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DNCNN_BUILD_EXAMPLES=OFF -DNCNN_VULKAN=OFF 
 make -j2 && sudo make install
 ```
 
-Verificar instalación, :
+Verificar instalación:
 ```bash
 ls /usr/local/include/ncnn/net.h
 ```
@@ -44,7 +49,7 @@ El código fue hecho y probado con una webcam USB. Si usas otra cámara hay que 
 - `calibracion.cpp`
 - `lane_detection.cpp`
 
-No intentes correr `sign_detection` a menos que tengas la cámara de cecigod (yo). La normalización no está lista y es muy sensible a cambios de hardware >:(
+Y eventualmente fused_lane_detection
 
 ---
 
@@ -67,7 +72,22 @@ VideoCapture cap(
 ```
 
 Reemplaza también los `cap.set()` de resolución y FPS (eso depende de cada camara, no estoy muy segura...).
- 
+
+---
+
+## Propósito de cada nodo
+
+cal_node es para calibración. Córrelo primero y anota los valores que te da, los vas a necesitar para ajustar la perspectiva del carril.
+
+lane_node es el de detección de carril. Publica la posición y ángulo del carril en tiempo real. Este es el que ustedes deberían usar ahorita para programar el movimiento básico.
+
+sign_node es detección de señales y autos. publica a /car_distance — std_msgs/Float32 y
+/stop_distance — std_msgs/Float32 
+
+fused_lane_node es la fusión de `lane_node` + `sign_node` en un solo proceso. La idea es que eventualmente reemplace los dos nodos corriendo por separado. Aún no probado !!!
+
+---
+
 ## PASO 1: Calibración
 
 ```bash
@@ -82,8 +102,27 @@ Anota los valores resultantes.
 ros2 run lane_detection lane_node
 ```
 
-## PASO 3: Verificar publicación de datos
+Publica al tópico `lane/info` — `geometry_msgs/Vector3`
+
+| campo | dato |
+|-------|------|
+| `x` | Desvío lateral del centro del carril (px) |
+| `y` | Rumbo/ángulo promedio de las líneas (°) |
+| `z` | Siempre `0.0` |
+
+Este es el nodo de detección de objetos, detecta objetos y te manda la distancia de la camara al objeto.
 
 ```bash
-ros2 topic echo /lane/info
+ros2 run lane_detection sign_node
 ```
+---
+
+## Sobre fused_lane_node
+
+Si se quieren arriesgar y probarlo:
+
+```bash
+ros2 run lane_detection fused_node
+```
+
+Van a necesitar corregir los errores que encuentren y optimizarlo. Por ahorita quédense con `lane_node` y programen el movimiento básico con eso, es lo más seguro.
