@@ -13,25 +13,27 @@ find_package(ncnn REQUIRED)
 include_directories(/home/dalw/ros2_ws/ncnn/build/install/include)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-# Nodo de Calibración
 add_executable(cal_node src/calibracion.cpp)
 target_link_libraries(cal_node ${OpenCV_LIBS} ncnn)
 ament_target_dependencies(cal_node rclcpp)
 
-# Nodo de Carril
 add_executable(lane_node src/lane_detect.cpp)
 target_link_libraries(lane_node ${OpenCV_LIBS} ncnn)
 ament_target_dependencies(lane_node rclcpp std_msgs geometry_msgs)
 
-# Nodo de Señales
 add_executable(sign_node src/sign_detect.cpp)
 target_link_libraries(sign_node ${OpenCV_LIBS} ncnn)
-ament_target_dependencies(sign_node rclcpp)
+ament_target_dependencies(sign_node rclcpp std_msgs)
 
-install(TARGETS 
+add_executable(fused_node src/fused_lane_detection.cpp)
+target_link_libraries(fused_node ${OpenCV_LIBS} ncnn)
+ament_target_dependencies(fused_node rclcpp std_msgs geometry_msgs)
+
+install(TARGETS
   cal_node
-  lane_node 
+  lane_node
   sign_node
+  fused_node
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
