@@ -201,7 +201,7 @@ rclcpp::Node::SharedPtr g_node;
 rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr g_pub;
 
 int main(int argc, char** argv) {
-    VideoCapture cap(1, CAP_V4L2);
+    VideoCapture cap(0, CAP_V4L2);
     cap.set(CAP_PROP_FOURCC, VideoWriter::fourcc('M','J','P','G'));
     cap.set(CAP_PROP_FRAME_WIDTH,  640);
     cap.set(CAP_PROP_FRAME_HEIGHT, 480);
