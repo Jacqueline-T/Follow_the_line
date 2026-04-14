@@ -25,15 +25,19 @@ add_executable(sign_node src/sign_detect.cpp)
 target_link_libraries(sign_node ${OpenCV_LIBS} ncnn)
 ament_target_dependencies(sign_node rclcpp std_msgs)
 
-add_executable(fused_node src/fused_lane_detection.cpp)
-target_link_libraries(fused_node ${OpenCV_LIBS} ncnn)
-ament_target_dependencies(fused_node rclcpp std_msgs geometry_msgs)
+add_executable(visual_node src/visual_tmr.cpp)
+target_link_libraries(visual_node ${OpenCV_LIBS} ncnn)
+ament_target_dependencies(visual_node rclcpp std_msgs geometry_msgs)
 
 install(TARGETS
   cal_node
   lane_node
   sign_node
-  fused_node
+  visual_node
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()

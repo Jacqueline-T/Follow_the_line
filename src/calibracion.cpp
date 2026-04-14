@@ -3,6 +3,9 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <fstream>
+#include <thread>
+#include <chrono>
 
 using namespace cv;
 using namespace std;
@@ -408,7 +411,27 @@ int main() {
         imshow("2. Vista Pajaro", vis);
         imshow("3. Binaria", binaria);
 
-        if (waitKey(1) == 'q') break;
+        int key = waitKey(1);
+        if (key == 'q') break;
+        if (key == 's') {
+            ofstream fs("/home/dalw/ros2_ws/calibracion.yaml");
+            fs << "perception_node:\n";
+            fs << "  ros__parameters:\n";
+            fs << "    ancho_sup: "  << cfg::ancho_sup  << "\n";
+            fs << "    ancho_inf: "  << cfg::ancho_inf  << "\n";
+            fs << "    alto_roi: "   << cfg::alto_roi   << "\n";
+            fs << "    despl_y: "    << cfg::despl_y    << "\n";
+            fs << "    blanco_min: " << cfg::blanco_min << "\n";
+            fs << "    canny_bajo: " << cfg::canny_bajo << "\n";
+            fs << "    canny_alto: " << cfg::canny_alto << "\n";
+            fs.close();
+
+            cap.release();
+            destroyAllWindows();
+            this_thread::sleep_for(chrono::seconds(2)); 
+            system("ros2 run lane_detection visual_node --ros-args --params-file /home/dalw/ros2_ws/calibracion.yaml &");
+            break;
+        }
     }
 
     cap.release();
