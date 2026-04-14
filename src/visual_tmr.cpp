@@ -2,7 +2,7 @@
 #include <ncnn/net.h>
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
-#include <std_msgs/msg/float32_multi_array.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -88,17 +88,18 @@ struct FrameSlot {
 // ---------------------------------------------------------------------------
 class ObjectDetector {
 public:
-    explicit ObjectDetector(rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub)
-        : pub_(pub)
-    {}
+    ObjectDetector() = default;
 
     bool loadModel(const string& param, const string& bin) {
+        net_.opt.use_vulkan_compute = false;
         return net_.load_param(param.c_str()) == 0 &&
                net_.load_model(bin.c_str())   == 0;
     }
 
     // Runs inference, draws boxes on frame (in-place), publishes distances.
-    void processFrame(Mat& frame) {
+    void processFrame(Mat& frame, float& dist_car, float& dist_stop) {
+        dist_car = -1.f;
+        dist_stop = -1.f;
         ncnn::Mat in = ncnn::Mat::from_pixels_resize(
             frame.data, ncnn::Mat::PIXEL_BGR2RGB,
             frame.cols, frame.rows, 640, 640);
@@ -135,7 +136,6 @@ public:
             scores[best].push_back(bconf);
         }
 
-        float dist_car = -1.f, dist_stop = -1.f;
         for (int c = 0; c < nc; c++) {
             vector<int> idx;
             dnn::NMSBoxes(boxes[c], scores[c], cfg::CONF_THRESH, cfg::NMS_THRESH, idx);
@@ -150,29 +150,20 @@ public:
                         b.tl() + Point(0, -6), FONT_HERSHEY_SIMPLEX, 0.5, CLASS_COLORS[c], 1);
             }
         }
-
-        std_msgs::msg::Float32MultiArray msg;
-        msg.data = {0.f, 0.f,
-                    dist_car  > 0 ? dist_car  : -1.f,
-                    dist_stop > 0 ? dist_stop : -1.f};
-        pub_->publish(msg);
     }
-
 private:
     ncnn::Net net_;
-    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_;
+    
 };
-
-// ---------------------------------------------------------------------------
 // PerceptionNode — one node, two publishers, one camera, two threads
-// ---------------------------------------------------------------------------
 class PerceptionNode : public rclcpp::Node {
 public:
     PerceptionNode()
         : Node("perception_node")
-        , detector_(create_publisher<std_msgs::msg::Float32MultiArray>("robot/perception", 10))
-    {
-        lane_pub_ = create_publisher<geometry_msgs::msg::Vector3>("lane/info", 10);
+        {
+            lane_pub_ = create_publisher<geometry_msgs::msg::Vector3>("lane/info", 10);
+            car_pub_  = create_publisher<std_msgs::msg::Float32>("/car_distance", 10);
+            stop_pub_ = create_publisher<std_msgs::msg::Float32>("/stop_distance", 10);
 
         // Parameters
         declare_parameter("ancho_sup",  200);
@@ -216,8 +207,8 @@ public:
         s_X_ = Mat(8000, 1, CV_64F);
 
         if (!detector_.loadModel(
-                "/home/dalw/ros2_ws/src/lane_detection/model.ncnn.param",
-                "/home/dalw/ros2_ws/src/lane_detection/model.ncnn.bin"))
+                "/home/puzzlebot/ros2_ws/src/lane_detection/model.ncnn.param",
+                "/home/puzzlebot/ros2_ws/src/lane_detection/model.ncnn.bin"))
             RCLCPP_FATAL(get_logger(), "Fallo al cargar el modelo NCNN");
     }
 
@@ -324,7 +315,18 @@ public:
         Mat frame;
         while (running) {
             if (!slot_.get(frame)) continue;  // wait up to 33 ms
-            detector_.processFrame(frame);
+            float dist_car = -1.f;
+            float dist_stop = -1.f;
+            detector_.processFrame(frame, dist_car, dist_stop);
+            std_msgs::msg::Float32 car_msg;
+            std_msgs::msg::Float32 stop_msg;
+
+            car_msg.data = (dist_car > 0) ? dist_car : -1.f;
+            stop_msg.data = (dist_stop > 0) ? dist_stop : -1.f;
+
+            car_pub_->publish(car_msg);
+            stop_pub_->publish(stop_msg);
+
             imshow("Perception", frame);
             if (waitKey(1) == 'q') { running = false; break; }
         }
@@ -468,8 +470,11 @@ private:
 
     // --- Members ---
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr lane_pub_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr car_pub_;
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr stop_pub_;
+
     ObjectDetector detector_;
-    FrameSlot      slot_;
+    FrameSlot slot_;
 
     VideoCapture cap_;
     Mat M_, Minv_;

@@ -30,8 +30,8 @@ int main(int argc, char** argv) {
     // net.opt.use_fp16_storage   = true;
     // net.opt.use_fp16_arithmetic= true;
 
-    if (net.load_param("/home/dalw/ros2_ws/src/lane_detection/model.ncnn.param") ||
-        net.load_model("/home/dalw/ros2_ws/src/lane_detection/model.ncnn.bin")) {
+    if (net.load_param("/home/puzzlebot/ros2_ws/src/lane_detection/model.ncnn.param") ||
+        net.load_model("/home/puzzlebot/ros2_ws/src/lane_detection/model.ncnn.bin")) {
         cerr << "Model loading failed!" << endl;
         return -1;
     }
